@@ -8,13 +8,13 @@ final planetsProvider = Provider<List<Planet>>(
       name: 'Sole',
       description:
           'La stella al centro del Sistema Solare, fonte primaria di luce e calore.',
-      apiId: 'sun',
+      apiId: 'soleil',
     ),
     Planet(
       name: 'Mercurio',
       description:
           'Il pianeta più interno e più piccolo, con escursioni termiche estreme.',
-      apiId: 'mercury',
+      apiId: 'mercure',
     ),
     Planet(
       name: 'Venere',
@@ -26,7 +26,7 @@ final planetsProvider = Provider<List<Planet>>(
       name: 'Terra',
       description:
           'Il nostro pianeta, l’unico noto a ospitare la vita, ricco di acqua liquida.',
-      apiId: 'earth',
+      apiId: 'terre',
     ),
     Planet(
       name: 'Marte',
@@ -44,7 +44,7 @@ final planetsProvider = Provider<List<Planet>>(
       name: 'Saturno',
       description:
           'Famoso per i suoi spettacolari anelli di ghiaccio e roccia.',
-      apiId: 'saturn',
+      apiId: 'saturne',
     ),
     Planet(
       name: 'Urano',
