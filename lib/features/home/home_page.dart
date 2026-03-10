@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../providers/planet_providers.dart';
+import '../../providers/planet_remote_providers.dart';
 import '../planet_detail/planet_detail_page.dart';
 
 class HomePage extends ConsumerWidget {
@@ -32,6 +33,7 @@ class HomePage extends ConsumerWidget {
         itemBuilder: (context, index) {
           final planet = planets[index];
           final isSun = planet.name == 'Sole';
+          final positionAsync = ref.watch(planetPositionProvider(planet));
 
           return Card(
             elevation: 2,
@@ -52,10 +54,42 @@ class HomePage extends ConsumerWidget {
                 planet.name,
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
-              subtitle: Text(
-                planet.description,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    planet.description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  positionAsync.when(
+                    data: (position) {
+                      if (position == null) {
+                        return const Text(
+                          'Posizione nel cielo non disponibile',
+                          style: TextStyle(fontSize: 12),
+                        );
+                      }
+                      return Text(
+                        'Azimut: ${position.az}  ·  Altitudine: ${position.alt}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      );
+                    },
+                    loading: () => const Text(
+                      'Calcolo posizione...',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                    error: (_, __) => const Text(
+                      'Errore nel recupero posizione',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ],
               ),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {
