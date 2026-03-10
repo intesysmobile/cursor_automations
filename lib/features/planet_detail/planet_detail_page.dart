@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/planet.dart';
+import '../../providers/planet_remote_providers.dart';
 
-class PlanetDetailPage extends StatelessWidget {
+class PlanetDetailPage extends ConsumerWidget {
   const PlanetDetailPage({
     super.key,
     required this.planet,
@@ -11,14 +13,16 @@ class PlanetDetailPage extends StatelessWidget {
   final Planet planet;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final longDescription = _longDescriptionForPlanet(planet.name);
+    final bodyAsync = ref.watch(planetDetailProvider(planet));
+    final positionAsync = ref.watch(planetPositionProvider(planet));
 
     return Scaffold(
       appBar: AppBar(
         title: Text(planet.name),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -60,8 +64,152 @@ class PlanetDetailPage extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],
+            const SizedBox(height: 24),
+            Text(
+              'Dati dall’API',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            bodyAsync.when(
+              data: (body) {
+                if (body == null) {
+                  return const Text('Dati non disponibili.');
+                }
+
+                final entries = <_InfoRowData>[
+                  _InfoRowData('ID', body.id),
+                  _InfoRowData('Nome inglese', body.englishName),
+                  _InfoRowData('Tipo corpo', body.bodyType),
+                  _InfoRowData('Pianeta', body.isPlanet ? 'Sì' : 'No'),
+                  _InfoRowData('Raggio medio (km)', body.meanRadius),
+                  _InfoRowData('Raggio equatoriale (km)', body.equaRadius),
+                  _InfoRowData('Raggio polare (km)', body.polarRadius),
+                  _InfoRowData('Schacciamento', body.flattening),
+                  _InfoRowData('Dimensione', body.dimension),
+                  _InfoRowData('Semiasse maggiore (km)', body.semimajorAxis),
+                  _InfoRowData('Perielio (km)', body.perihelion),
+                  _InfoRowData('Afelio (km)', body.aphelion),
+                  _InfoRowData('Eccentricità', body.eccentricity),
+                  _InfoRowData('Inclinazione (°)', body.inclination),
+                  _InfoRowData(
+                    'Massa (10^n kg)',
+                    body.massValue != null && body.massExponent != null
+                        ? '${body.massValue}e${body.massExponent}'
+                        : null,
+                  ),
+                  _InfoRowData(
+                    'Volume (10^n km³)',
+                    body.volValue != null && body.volExponent != null
+                        ? '${body.volValue}e${body.volExponent}'
+                        : null,
+                  ),
+                  _InfoRowData('Densità (g/cm³)', body.density),
+                  _InfoRowData('Gravità (m/s²)', body.gravity),
+                  _InfoRowData('Velocità di fuga (m/s)', body.escape),
+                  _InfoRowData('Orbita siderale (giorni)', body.sideralOrbit),
+                  _InfoRowData('Rotazione siderale (ore)', body.sideralRotation),
+                  _InfoRowData('Inclinazione assiale (°)', body.axialTilt),
+                  _InfoRowData('Temperatura media (K)', body.avgTemp),
+                  _InfoRowData('Scoperto da', body.discoveredBy),
+                  _InfoRowData('Data scoperta', body.discoveryDate),
+                ].where((e) => e.value != null && e.value.toString().isNotEmpty).toList();
+
+                if (entries.isEmpty) {
+                  return const Text('Nessun dato dettagliato disponibile.');
+                }
+
+                return Column(
+                  children: entries
+                      .map(
+                        (e) => _InfoRow(
+                          label: e.label,
+                          value: e.value!.toString(),
+                        ),
+                      )
+                      .toList(),
+                );
+              },
+              loading: () => const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: CircularProgressIndicator(),
+              ),
+              error: (_, __) => const Text('Errore nel recupero dei dati.'),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Posizione nel cielo',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            positionAsync.when(
+              data: (position) {
+                if (position == null) {
+                  return const Text('Posizione non disponibile.');
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _InfoRow(label: 'Ascensione retta', value: position.ra),
+                    _InfoRow(label: 'Declinazione', value: position.dec),
+                    _InfoRow(label: 'Azimut', value: position.az),
+                    _InfoRow(label: 'Altitudine', value: position.alt),
+                  ],
+                );
+              },
+              loading: () => const Text('Calcolo posizione...'),
+              error: (_, __) => const Text('Errore nel recupero della posizione.'),
+            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _InfoRowData {
+  _InfoRowData(this.label, this.value);
+
+  final String label;
+  final Object? value;
+}
+
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              '$label:',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+        ],
       ),
     );
   }
