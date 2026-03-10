@@ -60,7 +60,9 @@ String _englishNameForPlanet(Planet planet) {
     case 'Nettuno':
       return 'Neptune';
     default:
-      return planet.apiId;
+      throw ArgumentError(
+        'No English name mapping for planet: ${planet.name}',
+      );
   }
 }
 
